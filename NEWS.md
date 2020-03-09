@@ -7,3 +7,7 @@
 # pmdplyr 0.3.0
 
 * Includes fixes for full CRAN compliance.
+
+# pmdplyr 0.3.1
+
+* Fixes for compliance with **tibble** 3.0.0

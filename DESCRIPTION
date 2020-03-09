@@ -1,7 +1,7 @@
 Package: pmdplyr
 Type: Package
 Title: 'dplyr' Extension for Common Panel Data Maneuvers
-Version: 0.3.0
+Version: 0.3.1
 Authors@R: c(
     person(given = "Nick", family = "Huntington-Klein", role = c("aut","cre"), 
            email = "nhuntington-klein@fullerton.edu", 
@@ -20,14 +20,14 @@ Imports: lubridate, magrittr, pillar, tidyr, tibble, tidyselect, utils,
         vctrs, rlang (>= 0.4.0)
 Suggests: tsibble, plm, panelr, sjlabelled, knitr, rmarkdown, testthat
         (>= 2.1.0), covr
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.2
 VignetteBuilder: knitr
 LazyData: true
 NeedsCompilation: no
-Packaged: 2019-08-20 04:01:46 UTC; Philip
+Packaged: 2020-03-09 19:07:01 UTC; nhuntington-klein
 Author: Nick Huntington-Klein [aut, cre]
     (<https://orcid.org/0000-0002-7352-3991>),
   Philip Khor [aut] (<https://orcid.org/0000-0002-8333-1256>)
 Maintainer: Nick Huntington-Klein <nhuntington-klein@fullerton.edu>
 Repository: CRAN
-Date/Publication: 2019-08-26 09:50:02 UTC
+Date/Publication: 2020-03-09 19:30:02 UTC
