@@ -120,7 +120,7 @@ consistent_df <- data.frame(
 fixed_check(consistent_df, .var = treatment, .within = c(state, year))
 
 ## ---- eval = FALSE------------------------------------------------------------
-#  fixed_force(..df,
+#  fixed_force(.df,
 #    .var = NULL,
 #    .within = NULL,
 #    .resolve = mode_order,

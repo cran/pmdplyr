@@ -129,6 +129,15 @@ panel_fill <- function(.df, .set_NA = FALSE, .min = NA, .max = NA, .backwards = 
   arrnames <- c(inp$i, inp$t)
   arrnames <- arrnames[!is.na(arrnames)]
 
+  if (.group_i == FALSE) {
+    arrnames <- inp$t
+    arrnames <- arrnames[!is.na(arrnames)]
+  }
+
+  # pibble now confuses tibble
+  .df <- .df %>%
+    tibble::as_tibble()
+
   # see if we can skip this because we're already grouped by inp$i
   if (.group_i == TRUE & !anyNA(inp$i) & !setequal(origgroups, inp$i)) {
     .df <- .df %>%
@@ -161,11 +170,18 @@ panel_fill <- function(.df, .set_NA = FALSE, .min = NA, .max = NA, .backwards = 
         dplyr::select(-!!.set_NA)
     }
 
+    # This will kill the grouping if there is one
+    currentgroups <- utils::head(names(.df %@% "groups"),-1)
+
     .df <- dplyr::bind_rows(
-      .df,
+      tibble::as_tibble(.df),
       # Make you a new obs if your earliest obs isn't the minimum
-      earlydat
+      tibble::as_tibble(earlydat)
     )
+    if (!is.null(currentgroups)) {
+      .df <- .df %>%
+        dplyr::group_by_at(currentgroups)
+    }
 
     rm(earlyobs, earlydat)
   }
@@ -194,18 +210,26 @@ panel_fill <- function(.df, .set_NA = FALSE, .min = NA, .max = NA, .backwards = 
         dplyr::select(-!!.set_NA)
     }
 
+    # This will kill the grouping if there is one
+    currentgroups <- utils::head(names(.df %@% "groups"),-1)
+
     .df <- dplyr::bind_rows(
-      .df,
+      tibble::as_tibble(.df),
       # Make you a new obs if your latest obs isn't the maximum
-      latedat
+      tibble::as_tibble(latedat)
     )
+
+    if (!is.null(currentgroups)) {
+      .df <- .df %>%
+        dplyr::group_by_at(currentgroups)
+    }
 
     rm(latedat, lateobs)
   }
 
   # Put in order
   .df <- .df %>%
-    dplyr::arrange_at(inp$t)
+    dplyr::arrange_at(arrnames)
   if (.backwards == TRUE) {
     .df <- .df %>%
       dplyr::arrange(nrow(.):1)
@@ -294,13 +318,13 @@ panel_fill <- function(.df, .set_NA = FALSE, .min = NA, .max = NA, .backwards = 
       dplyr::ungroup() %>%
       dplyr::as_tibble() %>%
       dplyr::select(-!!copyname),
-    tocopy
+    tibble::as_tibble(tocopy)
   ) %>%
     dplyr::arrange_at(arrnames)
 
   # Panel-declare data if any changes have been made.
   if (.setpanel == TRUE & (!anyNA(.icall) | !is.na(.tcall) | !is.na(.d))) {
-    .df <- as_pibble(.df, {{ .i }}, {{ .t }}, inp$d, .uniqcheck = .uniqcheck)
+    .df <- as_pibble(.df, inp$i, inp$t, inp$d, .uniqcheck = .uniqcheck)
   }
 
   # Check if grouping has changed and there WAS an original grouping
@@ -606,13 +630,28 @@ fixed_check <- function(.df, .var = NULL, .within = NULL) {
   .df <- .df %>%
     dplyr::group_by_at(.withincall)
 
+  reassign_pibble <- is_pibble(.df, .silent = TRUE)
+  if (reassign_pibble) {
+    i <- attr(.df,".i")
+    j <- attr(.df,".j")
+    d <- attr(.df,".d")
+    class(.df) <- class(.df)[!(class(.df) %in% "tbl_pb")]
+    attr(.df, ".i") <- NULL
+    attr(.df, ".t") <- NULL
+    attr(.df, ".d") <- NULL
+  }
+
   # for each element of .var, drop consistent obs
   result <- lapply(.varcall, function(x) {
-    .df %>%
+    .df <- .df %>%
       dplyr::arrange_at(x) %>%
       dplyr::filter_at(x, dplyr::any_vars(dplyr::first(.) != dplyr::last(.) |
         is.na(dplyr::first(.)) != is.na(dplyr::last(.)))) %>%
       dplyr::ungroup()
+    if (reassign_pibble) {
+      .df <- as_pibble(.df, .i = i, .t = t, .d = d)
+    }
+    return(.df)
   })
 
   # check if there are any inconsistent obs
@@ -718,8 +757,8 @@ fixed_force <- function(.df, .var = NULL, .within = NULL, .resolve = mode_order,
         nrow = nrow(.df)
       ) +
         (is.na(.df) & is.na(databkup))) < ncol(.df)
-      .df <- .df %>%
-        dplyr::mutate(!!.flag := !!newflag)
+      # Drop dplyr here to assign ungrouped vector to grouped data
+      .df[[.flag]] <- newflag
       rm(databkup)
     }
   }
